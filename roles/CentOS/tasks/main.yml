@@ -1,0 +1,12 @@
+---
+
+- name: install Elastic stack (CentOS)
+  dnf:
+    name:
+      - elasticsearch
+      - kibana
+      - logstash
+      - filebeat
+    state: latest
+    update_cache: yes
+  when: ansible_distribution == "CentOS"
