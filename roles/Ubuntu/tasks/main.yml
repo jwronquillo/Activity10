@@ -4,6 +4,12 @@
   apt:
     name:
       - openjdk-11-jdk
+      - apt-transport-https
+      - curl
+      - gpgv
+      - gpgsm
+      - gnupg
+      - dirmngr
     state: latest
   when: ansible_distribution == "Ubuntu"
 
@@ -92,3 +98,9 @@
 - name: Run daemon-reload for logstash
   systemd: daemon_reload=yes
   when: ansible_distribution == "Ubuntu"
+
+- name: start elasticsearch service
+  shell: systemctl start elasticsearch.service
+
+- name: start kibana service
+  shell: systemctl start kibana
