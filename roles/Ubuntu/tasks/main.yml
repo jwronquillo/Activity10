@@ -12,95 +12,139 @@
       - dirmngr
     state: latest
   when: ansible_distribution == "Ubuntu"
-
-- name: add elasticsearch apt key
+  
+  
+- name: Get GPG-Key elasticsearch (Ubuntu)
   apt_key:
-    url: "https://packages.elastic.co/GPG-KEY-elasticsearch"
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
     state: present
-  when: ansible_distribution == "Ubuntu"
 
-- name: adding elastic repository
+- name: Install Elasticsearch sources list (Ubuntu)
   apt_repository:
-    repo: deb https://artifacts.elastic.co/packages/5.x/apt stable main
-  when: ansible_distribution == "Ubuntu"
+    repo: deb https://artifacts.elastic.co/packages/7.x/apt stable main
+    state: present
 
-- name: install elasticsearch
+- name: Install Elasticsearch (Ubuntu)
   apt:
     name: elasticsearch
+    state: latest
     update_cache: yes
-  when: ansible_distribution == "Ubuntu"
 
-- name: allow outside access elasticsearch (Ubuntu)
+- name: Configure Elasticsearch cluster name (Ubuntu)
   lineinfile:
     dest: /etc/elasticsearch/elasticsearch.yml
-    regexp: 'network.host:'
-    line: 'network.host: 0.0.0.0'
+    line: "cluster.name: midterm exam"
     state: present
-  when: ansible_distribution == "Ubuntu"
 
-- name: update port in config file
+- name: Configure Elasticsearch descriptive name (Ubuntu)
   lineinfile:
     dest: /etc/elasticsearch/elasticsearch.yml
-    line: 'http.port:9200'
+    line: "node.name: elastic search"
     state: present
-  when: ansible_distribution == "Ubuntu"
 
-- name: enable elasticsearch
-  service:
+- name: Configure Elasticsearch Adding network.host (Ubuntu)
+  lineinfile:
+    dest: /etc/elasticsearch/elasticsearch.yml
+    line: "network.host: 0.0.0.0"
+    state: present
+
+- name: Configure Elasticsearch Adding http.port (Ubuntu)
+  lineinfile:
+    dest: /etc/elasticsearch/elasticsearch.yml
+    line: "http.port: 9200"
+    state: present
+
+- name: Configure Elasticsearch Adding discovery.type (Ubuntu)
+  lineinfile:
+    dest: /etc/elasticsearch/elasticsearch.yml
+    line: "discovery.type: single-node"
+    state: present
+
+- name: Creating empty file for startup-timeout.conf 1 of 2 (Ubuntu)
+  file:
+    path: "/etc/systemd/system/elasticsearch.service.d"
+    state: directory
+
+- name: Creating an empty file for startup-timeout.conf 2 of 2 (Ubuntu)
+  file:
+    path: "/etc/systemd/system/elasticsearch.service.d/startup-timeout.conf"
+    state: touch
+
+- name: Prevent systemd service start operation from timing out (Ubuntu)
+  copy:
+    dest: "/etc/systemd/system/elasticsearch.service.d/startup-timeout.conf"
+    content: |
+      [Service]
+      TimeoutStartSec=3min
+- name: Run daemon-reload for elasticsearch (Ubuntu)
+  systemd: daemon_reload=yes
+
+- name: Enable service Elasticsearch and ensure it is not masked (Ubuntu)
+  systemd:
     name: elasticsearch
     enabled: yes
     masked: no
-  when: ansible_distribution == "Ubuntu"
 
-- name: install kibana (Ubuntu)
-  apt:
-    name: kibana
-    update_cache: yes
-  when: ansible_distribution == "Ubuntu"
+- name: ensure elasticsearch is running (Ubuntu)
+  systemd: state=started name=elasticsearch
 
-- name: allow outside access for kibana
-  lineinfile:
-    dest: /etc/kibana/kibana.yml
-    regexp: 'server.host'
-    line: 'server.hosts: 0.0.0.0'
-    state: present
-  when: ansible_distribution == "Ubuntu"
-
-- name: def server port
-  lineinfile:
-    dest: /etc/kibana/kibana.yml
-    regexp: 'server.port:'
-    line: 'server.port: 5601'
-    state: present
-  when: ansible_distribution == "Ubuntu"
-
-- name: def elastic URL
-  lineinfile:
-    dest: /etc/kibana/kibana.yml
-    regexp: 'elasticsearch.url'
-    line: 'elasticsearch.url: "https://localhost:9200:"'
-    state: present
-  when: ansible_distribution == "Ubuntu"
-
-- name: enable kibana
-  systemd:
-    name: kibana
-    enabled: yes
-  when: ansible_distribution == "Ubuntu"
-
-- name: install logstash
+- name: Install Logstash (Ubuntu)
   apt:
     name: logstash
     state: latest
     update_cache: yes
-  when: ansible_distribution == " Ubuntu"
 
-- name: Run daemon-reload for logstash
+- name: Run daemon-reload for logstash (Ubuntu)
   systemd: daemon_reload=yes
-  when: ansible_distribution == "Ubuntu"
 
-- name: start elasticsearch service
-  shell: systemctl start elasticsearch.service
+- name: Enable service logstash (Ubuntu)
+  systemd:
+    name: logstash
+    enabled: yes
 
-- name: start kibana service
+- name: ensure logstash is running (Ubuntu)
+  systemd: state=started name=logstash
+
+- name: Install Kibana (Ubuntu)
+  apt:
+    name: kibana
+    state: latest
+    update_cache: yes
+
+- name: Configure Kibana Add server.port (Ubuntu)
+  lineinfile:
+    dest: /etc/kibana/kibana.yml
+    line: "server.port: 5601"
+    state: present
+
+- name: Configure Kibana Add server.host (Ubuntu)
+  lineinfile:
+    dest: /etc/kibana/kibana.yml
+    line: 'server.host: "0.0.0.0"'
+    state: present
+
+- name: Configure Kibana Add server.name (Ubuntu)
+  lineinfile:
+    dest: /etc/kibana/kibana.yml
+    line: 'server.name: "demo-kibana"'
+    state: present
+
+- name: Configure Kibana Add elasticsearch.hosts (Ubuntu)
+  lineinfile:
+    dest: /etc/kibana/kibana.yml
+    line: 'elasticsearch.hosts: ["http://0.0.0.0:9200"]'
+    state: present
+
+- name: Run daemon-reload for kibana (Ubuntu)
+  systemd: daemon_reload=yes
+
+- name: Enable service Kibana (Ubuntu)
+  systemd:
+    name: kibana
+    enabled: yes
+
+- name: Start Elasticsearch service
+  shell: systemctl start elasticsearch
+
+- name: Start Kibana
   shell: systemctl start kibana
