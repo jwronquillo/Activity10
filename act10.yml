@@ -4,28 +4,61 @@
   become: true
   pre_tasks:
 
-  - name: install updates (CentOS)
-    tags: always
-    dnf:
-      update_only: yes
-      update_cache: yes
-    when: ansible_distribution == "CentOS"
+  -  name: install updates (Ubuntu)
+     tags: always
+     apt:
+       upgrade: dist
+       update_cache: yes
+     changed_when: false
+     when: ansible_distribution == "Ubuntu"
 
-  - name: install updates (Ubuntu)
-    tags: always
-    apt:
-      upgrade: dist
-      update_cache: yes
-    when: ansible_distribution == "Ubuntu"
+  -  name: update repository index (CentOS)
+     tags: always
+     dnf:
+       update_cache: yes
+     changed_when: false
+     when: ansible_distribution == "CentOS"
 
+  -  name: install unzip
+     package:
+       name: unzip
 
 - hosts: Ubuntu
   become: true
   roles:
     - Ubuntu
 
-- hosts: CentOS
+- hosts: Centos
   become: true
   roles:
-    - CentOS
+    - Centos
 
+
+- hosts: all
+  become: true
+  tasks:
+
+  -  name: install apache and php for Ubuntu servers
+     tags: apache, apache2, Ubuntu
+     apt:
+       name:
+         - apache2
+         - libapache2-mod-php
+       state: latest
+     when: ansible_distribution == "Ubuntu"
+
+  -  name: install apache and php for CentOS servers
+     tags: apache,apache2,Centos
+     dnf:
+       name:
+         - httpd
+         - php
+       state: latest
+     when: ansible_distribution == "Centos"
+
+  -  name: start httpd (CentOS)
+     tags: apache,Centos,httpd
+     service:
+       name: httpd
+       state: started
+     when: ansible_distribution == "CentOS"
