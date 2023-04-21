@@ -12,8 +12,8 @@
       - dirmngr
     state: latest
   when: ansible_distribution == "Ubuntu"
-  
-  
+
+
 - name: Get GPG-Key elasticsearch (Ubuntu)
   apt_key:
     url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
@@ -27,7 +27,6 @@
 - name: Install Elasticsearch (Ubuntu)
   apt:
     name: elasticsearch
-    state: latest
     update_cache: yes
 
 - name: Configure Elasticsearch cluster name (Ubuntu)
