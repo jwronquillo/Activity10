@@ -4,11 +4,13 @@
   get_url:
     url: https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-8.4.3-x86_64.rpm
     dest: /tmp/elasticsearch-8.4.3-x86_64.rpm
+    validate_certs: no
 
 - name: Installing elasticsearch
   yum:
     name: /tmp/elasticsearch-8.4.3-x86_64.rpm
     state: present
+    disable_gpg_check: yes
 
 - name: Configuring cluster.name
   replace:
@@ -51,30 +53,34 @@
     regexp: "TimeoutStartSec=75"
     replace: "TimeoutStartSec=300"
 
-- name: Opening port for elastic search
-  shell: |
-    sudo firewall-cmd --permanent --zone=public --add-port=9200/tcp
-    sleep 10
-    sudo firewall-cmd --reload
-- name: Enabling elastic search service
-  shell: |
-    systemctl enable elasticsearch.service
-    sleep 10
-    systemctl start elasticsearch.service
-- name: Downloading and installing public signing key
-  rpm_key:
-    state: present
-    key: "{{ gpg_key_kibana }}"
+- name: open port 9200
+  firewalld:
+    service: elasticsearch
+    zone: public
+    permanent: yes
+    state: enabled
 
-- name: Adding kibana to the RPM repository
+- name: enable firewall
+  firewalld:
+    state: enabled
+
+- name: download and install gpg  key
+  get_url:
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    dest: "/tmp/kibana-pubkey.asc"
+
+- name: import pub key
+  command: rpm --import /tmp/kibana-pubkey.asc
+
+- name: add kibana to rpm repo
   copy:
     src: kibana.repo
     dest: /etc/yum.repos.d/kibana.repo
     owner: root
     group: root
-    mode: 777
+    mode: '777'
 
-- name: Updating the repository once again
+- name: update repo
   yum:
     name:
       - kibana
@@ -135,7 +141,7 @@
     state: latest
 
 - name: Opening port for Logstash
-  shell: |
+  shell:
     sudo firewall-cmd --permanent --zone=public --add-port=9600/tcp
     sleep 10
     sudo firewall-cmd --reload

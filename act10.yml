@@ -28,10 +28,12 @@
   roles:
     - Ubuntu
 
-- hosts: Centos
+- hosts: CentOS
   become: true
+  vars:
+    gpg_key_kibana: "https://artifacts.elastic.co/GPG-KEY-elasticsearch"
   roles:
-    - Centos
+    - CentOS
 
 
 - hosts: all
